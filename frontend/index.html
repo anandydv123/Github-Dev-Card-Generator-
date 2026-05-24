@@ -1,1 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GitHub Dev Card Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1f2630;
+    --border: #30363d;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-2: #a371f7;
+    --success: #3fb950;
+    --danger: #f85149;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1.25rem 4rem;
+    background-image:
+      radial-gradient(1000px circle at 10% -10%, rgba(88, 166, 255, .10), transparent 50%),
+      radial-gradient(900px circle at 100% 10%, rgba(163, 113, 247, .10), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  main {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  header {
+    text-align: center;
+    animation: fade-in .5s ease-out both;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 5vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--fg), var(--accent) 70%, var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .subtitle {
+    margin: .5rem 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  /* ---- Form ---- */
+  form {
+    display: flex;
+    gap: .6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: .55rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+    transition: border-color .2s, box-shadow .2s;
+    animation: fade-in .6s ease-out .05s both;
+  }
+  form:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(88, 166, 255, .15);
+  }
+  input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--fg);
+    font: inherit;
+    font-size: 1rem;
+    padding: .7rem .85rem;
+  }
+  input::placeholder { color: var(--muted); }
+
+  button {
+    cursor: pointer;
+    border: 0;
+    border-radius: 10px;
+    padding: .7rem 1.15rem;
+    font: inherit;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+    box-shadow: 0 6px 18px rgba(88, 166, 255, .28);
+  }
+  button:hover:not(:disabled) {
+    transform: translateY(-1px) scale(1.02);
+    filter: brightness(1.08);
+    box-shadow: 0 10px 24px rgba(88, 166, 255, .38);
+  }
+  button:active:not(:disabled) { transform: translateY(0) scale(.99); }
+  button:disabled { cursor: not-allowed; opacity: .6; }
+
+  /* ---- Status / errors ---- */
+  .error {
+    background: rgba(248, 81, 73, .08);
+    border: 1px solid rgba(248, 81, 73, .35);
+    color: #ffb4b0;
+    padding: .85rem 1rem;
+    border-radius: 12px;
+    font-size: .95rem;
+    animation: fade-in .3s ease-out both;
+  }
+
+  /* ---- Skeleton ---- */
+  .skeleton {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fade-in .3s ease-out both;
+  }
+  .skeleton-row { display: flex; gap: 1rem; align-items: center; }
+  .sk {
+    background: linear-gradient(90deg, var(--surface-2) 0%, #2a313c 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: shimmer 1.4s infinite ease-in-out;
+  }
+  .sk-circle { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; }
+  .sk-line { height: 12px; }
+  .sk-line.lg { height: 18px; }
+  .sk-grow { flex: 1; }
+  .sk-stack { display: flex; flex-direction: column; gap: .5rem; flex: 1; }
+  .sk-row { display: flex; gap: .5rem; }
+
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; opacity: .85; }
+    50%  { opacity: 1; }
+    100% { background-position: -200% 0; opacity: .85; }
+  }
+
+  /* ---- Result ---- */
+  .result {
+    animation: fade-in .5s ease-out both;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+  }
+  .card-frame {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+  }
+  iframe {
+    width: 100%;
+    border: 0;
+    display: block;
+    background: var(--bg);
+    height: 720px;
+  }
+
+  .actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    box-shadow: none;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    filter: none;
+    box-shadow: 0 4px 14px rgba(88, 166, 255, .15);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    padding: .65rem 1rem;
+    border-radius: 999px;
+    font-size: .9rem;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(63, 185, 80, .5); }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: .8rem;
+    margin-top: 1rem;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>GitHub Dev Card Generator</h1>
+      <p class="subtitle">Enter any public GitHub username</p>
+    </header>
+
+    <form id="form" autocomplete="off">
+      <input
+        id="username"
+        type="text"
+        placeholder="e.g. torvalds"
+        required
+        autofocus
+        spellcheck="false"
+        autocapitalize="off"
+      />
+      <button id="submit" type="submit">Generate Card</button>
+    </form>
+
+    <div id="status"></div>
+
+    <footer>Powered by FastMCP · FastAPI · Gemini-ready analysis</footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const API_BASE = "__BACKEND_URL__".startsWith("__") ? "http://127.0.0.1:8080" : "__BACKEND_URL__";
+  const form     = document.getElementById("form");
+  const input    = document.getElementById("username");
+  const submit   = document.getElementById("submit");
+  const status   = document.getElementById("status");
+  const toast    = document.getElementById("toast");
+
+  function showToast(msg, kind = "") {
+    toast.textContent = msg;
+    toast.className = "toast show " + kind;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => (toast.className = "toast " + kind), 2200);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderSkeleton() {
+    status.innerHTML = `
+      <div class="skeleton" aria-busy="true" aria-label="Generating card">
+        <div class="skeleton-row">
+          <div class="sk sk-circle"></div>
+          <div class="sk-stack">
+            <div class="sk sk-line lg" style="width:55%"></div>
+            <div class="sk sk-line"    style="width:35%"></div>
+          </div>
+        </div>
+        <div class="sk sk-line" style="width:90%"></div>
+        <div class="sk sk-line" style="width:75%"></div>
+        <div class="sk-row">
+          <div class="sk sk-line" style="width:70px; height:24px; border-radius:999px;"></div>
+          <div class="sk sk-line" style="width:90px; height:24px; border-radius:999px;"></div>
+          <div class="sk sk-line" style="width:60px; height:24px; border-radius:999px;"></div>
+        </div>
+        <div class="sk sk-line" style="width:100%; height:60px;"></div>
+        <div class="sk sk-line" style="width:100%; height:60px;"></div>
+      </div>
+    `;
+  }
+
+  function renderError(message) {
+    status.innerHTML = `<div class="error">⚠ ${escapeHtml(message)}</div>`;
+  }
+
+  function renderResult({ card_url, card_html, username }) {
+    const fullUrl = card_url.startsWith("http") ? card_url : `${API_BASE}${card_url}`;
+    const safeUsername = escapeHtml(username);
+
+    status.innerHTML = `
+      <div class="result">
+        <div class="actions">
+          <button id="share" class="btn-secondary" type="button">🔗 Copy share link</button>
+          <button id="open"  class="btn-secondary" type="button">↗ Open in new tab</button>
+          <button id="again" class="btn-secondary" type="button">↺ Try another</button>
+        </div>
+        <div class="card-frame">
+          <iframe id="cardFrame" title="${safeUsername}'s dev card" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+        </div>
+      </div>
+    `;
+
+    const frame = document.getElementById("cardFrame");
+    if (card_html) {
+      frame.srcdoc = card_html;
+    } else {
+      frame.src = fullUrl;
+    }
+    // Auto-size iframe to its content once loaded
+    frame.addEventListener("load", () => {
+      try {
+        const doc = frame.contentDocument;
+        if (doc) {
+          const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+          frame.style.height = (h + 16) + "px";
+        }
+      } catch (_) { /* cross-origin: leave default */ }
+    });
+
+    document.getElementById("share").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        showToast("Link copied to clipboard ✓", "success");
+      } catch {
+        showToast("Couldn't copy — " + fullUrl);
+      }
+    });
+    document.getElementById("open").addEventListener("click", () => {
+      window.open(fullUrl, "_blank", "noopener");
+    });
+    document.getElementById("again").addEventListener("click", () => {
+      status.innerHTML = "";
+      input.value = "";
+      input.focus();
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = input.value.trim();
+    if (!username) return;
+
+    submit.disabled = true;
+    submit.textContent = "Generating…";
+    renderSkeleton();
+
+    try {
+      const resp = await fetch(`${API_BASE}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+
+      if (!resp.ok) {
+        let detail = `Request failed (${resp.status})`;
+        try {
+          const j = await resp.json();
+          if (j && j.detail) detail = j.detail;
+        } catch {}
+        if (resp.status === 404 || /not found/i.test(detail)) {
+          renderError(`We couldn't find a GitHub user named "${username}". Double-check the spelling — public profiles only.`);
+        } else {
+          renderError(detail);
+        }
+        return;
+      }
+
+      const data = await resp.json();
+      renderResult({ ...data, username });
+    } catch (err) {
+      console.error(err);
+      renderError("Couldn't reach the backend at " + API_BASE + ". Is it running on port 8080?");
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Generate Card";
+    }
+  });
+</script>
+</body>
+</html>
 
