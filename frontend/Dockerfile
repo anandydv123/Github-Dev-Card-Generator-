@@ -4,7 +4,7 @@ FROM nginx:alpine
 RUN apk add --no-cache gettext
 
 # Default backend URL (overridable at runtime: -e BACKEND_URL=...)
-ENV BACKEND_URL=http://localhost:8080
+ENV BACKEND_URL=https://github-dev-card-generator-production.up.railway.app
 
 # Copy the unmodified template — it contains the literal token __BACKEND_URL__
 COPY index.html /usr/share/nginx/html/index.html.template
