@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: ./backend
+    container_name: gcg-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - PORT=8080
+    volumes:
+      - ./backend/static:/app/static
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: gcg-frontend
+    ports:
+      - "3000:80"
+    environment:
+      # Browser hits the backend directly, so use the host-exposed port
+      - BACKEND_URL=http://localhost:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
